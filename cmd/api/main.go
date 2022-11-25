@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
-
 func main() {
-	fmt.Println("hello world!")
+	server()
+}
+
+// server
+func server() {
+	r := Routes()
+	r.Run() // listen and serve on 0.0.0.0:8080
 }
