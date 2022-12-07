@@ -16,4 +16,4 @@
 | :------------------------ | :----------: | :---------------------------------------------------------: | :--------------------------------- |
 | `/v1/api/users/login`     |    `POST`    |                     `{email, password}`                     | Authenticate user (login function) |
 | `/v1/api/users/register`  |    `POST`    | `{first_name, last_name, email, password, password_repeat}` | Register user (register function)  |
-| `/v1/api/users/user-info` |    `GET`     |                          `{email}`                          | Get user info                      |
+| `/v1/api/users/user-info` |    `GET`     |                          `{token}`                          | Get user info                      |
