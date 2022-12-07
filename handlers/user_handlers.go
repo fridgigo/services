@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/fridgigo/sercies/models"
+	"github.com/fridgigo/services/models"
 	"github.com/gin-gonic/gin"
 )
 
