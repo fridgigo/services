@@ -1,9 +1,8 @@
-package handlers
+package user
 
 import (
 	"net/http"
 
-	"github.com/fridgigo/services/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,10 +10,9 @@ import (
 post method
 user sign in function
 */
-func Login(c *gin.Context) {
-	var user models.User
+func (u *User) Login(c *gin.Context) {
 
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -32,11 +30,16 @@ func Login(c *gin.Context) {
 post method
 user sign up function
 */
-func Register(c *gin.Context) {
-	var user models.User
+func (u *User) Register(c *gin.Context) {
 
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// check for User struct object
+	if u.Email == "" || u.FirstName == "" || u.LastName == "" || u.Password == "" || u.Password != u.RepeatPassword {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
 		return
 	}
 
@@ -52,10 +55,9 @@ func Register(c *gin.Context) {
 get method
 get user infos
 */
-func GetUser(c *gin.Context) {
-	var user models.User
+func (u *User) GetUser(c *gin.Context) {
 
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
