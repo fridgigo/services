@@ -16,6 +16,7 @@ func (u *User) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusBadRequest, gin.H{"Message": "Success"})
 
 	// TODO:
 	// connect to db and check for user exists
@@ -42,7 +43,7 @@ func (u *User) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
 		return
 	}
-
+	c.JSON(http.StatusBadRequest, gin.H{"Message": "Success"})
 	// TODO:
 	// connect to db and check for user exists
 	// if user exits in db

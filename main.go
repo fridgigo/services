@@ -3,10 +3,11 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/fridgigo/services/handlers"
 	"github.com/fridgigo/services/handlers/user"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 )
@@ -19,7 +20,20 @@ func main() {
 	}
 
 	// Creating a new Server with gin
-	router := gin.New()
+	router := gin.Default()
+	// CORS for https://* and http://* origins, allowing:
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "https://*"
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+	// use router Logger
 	router.Use(gin.Logger())
 
 	// user struct instance
