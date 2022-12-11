@@ -87,7 +87,7 @@ func (u *User) Register(c *gin.Context) {
 	u.ConfirmationNumber = helper.RandomNumber()
 
 	// INSERT-query executing
-	_, err = db.Exec(fmt.Sprintf("INSERT INTO users (email, first_name, last_name, password, confirmed, deleted, confirmation_number) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v)", u.Email, u.FirstName, u.LastName, u.Password, u.Confirmed, u.Deleted, u.ConfirmationNumber))
+	_, err = db.Exec(fmt.Sprintf("INSERT INTO users (email, first_name, last_name, password, confirmed, deleted, confirmation_number) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')", u.Email, u.FirstName, u.LastName, u.Password, u.Confirmed, u.Deleted, u.ConfirmationNumber))
 	if err != nil {
 		log.Println("Error in inserting: ", err)
 		return
