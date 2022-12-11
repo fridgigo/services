@@ -18,13 +18,14 @@ var (
 	dbName   = "calhounio_demo"
 )
 
-func Connect() {
+func Connect() (*sql.DB, error) {
 	// postgres credentials
 	host = os.Getenv("DB_HOST")
 	// converting port number to integer
 	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
 		log.Println(err)
+		return nil, err
 	}
 	user = os.Getenv("DB_USER")
 	password = os.Getenv("DB_PASSWORD")
@@ -33,16 +34,18 @@ func Connect() {
 	connUri := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=require", host, port, user, password, dbName)
 	db, err := sql.Open("postgres", connUri)
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return db, err
 	}
 
 	// close db connection at the end
-	defer db.Close()
+	// defer db.Close() -> db will be closed in other package
 
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return db, err
 	}
-
-	fmt.Println("DB: Successfully connected!")
+	fmt.Println("connection was successfully")
+	return db, nil
 }
