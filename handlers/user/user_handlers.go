@@ -25,13 +25,44 @@ func (u *User) Login(c *gin.Context) {
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"Message": "Success"})
 
+	// check for User struct object
+	if u.Email == "" && u.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
+		return
+	}
+
+	// connect to db, if there is an error, then panic it
+	db, err := driver.Connect()
+	if err != nil {
+		log.Println("Error on connection: ", err)
+	}
+	// close db connection at the end
+	defer db.Close()
+
+	// check for user if user exits in db
+	// if user exits in db
+	// return the error message back as a response
+	user, err := db.Query(fmt.Sprintf("SELECT email, password FROM public.users where email = '%s' ", u.Email))
+	if err != nil {
+		log.Println("Error on sql query: ", err)
+		return
+	}
+	var email, password string
+	for user.Next() {
+		err = user.Scan(&email, &password)
+		if err != nil {
+			log.Panic("Error on user finding: ", err)
+		}
+	}
+	// check for password hash
+	pass := helper.CheckPasswordHash(u.Password, password)
+	if pass != true {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Password is not correct."})
+		return
+	}
+
 	// TODO:
-	// connect to db and check for user exists
-	// if user exits and password is correct
-	// then generate a json web token (jwt)
-	// return it back as a response
-	// if user not exists in db or password is wrong
-	// then send back error message as a response
+
 }
 
 /*
@@ -85,6 +116,13 @@ func (u *User) Register(c *gin.Context) {
 	u.UpdatedAt = time.Now().Unix() // must improved
 	// generate random number
 	u.ConfirmationNumber = helper.RandomNumber()
+	// hash the password
+	u.Password, err = helper.HashPassword(u.Password)
+	if err != nil {
+		log.Println("there is an error password hashing:", err)
+	}
+
+	fmt.Println(u.Password)
 
 	// INSERT-query executing
 	_, err = db.Exec(fmt.Sprintf("INSERT INTO users (email, first_name, last_name, password, confirmed, deleted, confirmation_number) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')", u.Email, u.FirstName, u.LastName, u.Password, u.Confirmed, u.Deleted, u.ConfirmationNumber))
@@ -115,6 +153,69 @@ func (u *User) ConfirmUser(c *gin.Context) {
 	// check for user
 	// update confirmation status (set true)
 	// generate a token (jwt)
+
+	if err := c.ShouldBindJSON(&u); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// check for User struct object
+	if u.Email == "" && u.ConfirmationNumber == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
+		return
+	}
+
+	// connect to db, if there is an error, then panic it
+	db, err := driver.Connect()
+	if err != nil {
+		log.Println("Error on connection: ", err)
+	}
+	// close db connection at the end
+	defer db.Close()
+
+	// check for user if user exits in db
+	// if user exits in db
+	// return the error message back as a response
+	user, err := db.Query(fmt.Sprintf("SELECT email, confirmation_number FROM public.users where email = '%s' ", u.Email))
+	if err != nil {
+		log.Println("Error on sql query: ", err)
+		return
+	}
+
+	var email string
+	var confirmationNumber int
+
+	for user.Next() {
+		err = user.Scan(&email, &confirmationNumber)
+		if err != nil {
+			log.Panic("Error on user finding: ", err)
+			return
+		}
+	}
+
+	// check is confirmation number is correct
+	if u.ConfirmationNumber != confirmationNumber {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
+		return
+	}
+
+	// confirm user, set user confirmed as true
+	// Prepare the update statement
+	stmt, err := db.Prepare(fmt.Sprintf("UPDATE users SET confirmed = 'true' WHERE email = '%s'", u.Email))
+	if err != nil {
+		log.Println("Error (update): ", err)
+	}
+	defer stmt.Close()
+
+	// Execute the update statement
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Println("Error (execute update): ", err)
+	}
+
+	// return back
+	c.JSON(http.StatusOK, gin.H{"Message": "User was successfully confirmed."})
+	return
 }
 
 /*
