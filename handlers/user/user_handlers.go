@@ -8,6 +8,7 @@ import (
 
 	"github.com/fridgigo/services/helper"
 	"github.com/fridgigo/services/internal/driver"
+	"github.com/fridgigo/services/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,11 +20,11 @@ user sign in function
 */
 func (u *User) Login(c *gin.Context) {
 
+	// check for request body
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"Message": "Success"})
 
 	// check for User struct object
 	if u.Email == "" && u.Password == "" {
@@ -42,27 +43,42 @@ func (u *User) Login(c *gin.Context) {
 	// check for user if user exits in db
 	// if user exits in db
 	// return the error message back as a response
-	user, err := db.Query(fmt.Sprintf("SELECT email, password FROM public.users where email = '%s' ", u.Email))
+	user, err := db.Query(fmt.Sprintf("SELECT email, password, confirmed FROM public.users where email = '%s' ", u.Email))
 	if err != nil {
 		log.Println("Error on sql query: ", err)
 		return
 	}
 	var email, password string
+	var confirmed bool
+
 	for user.Next() {
-		err = user.Scan(&email, &password)
+		err = user.Scan(&email, &password, &confirmed)
 		if err != nil {
 			log.Panic("Error on user finding: ", err)
+			c.JSON(http.StatusBadRequest, gin.H{"Message": "Something went wrong. Please try again."})
+			return
 		}
 	}
+	// check if user not confirmed, then return back error message
+	if confirmed == false {
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "This user has not confirmed their account."})
+		return
+	}
+
 	// check for password hash
 	pass := helper.CheckPasswordHash(u.Password, password)
 	if pass != true {
-		c.JSON(http.StatusBadRequest, gin.H{"Message": "Password is not correct."})
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "The password you have entered is incorrect."})
 		return
 	}
 
 	// TODO:
-
+	jwt, err := middleware.GenerateJWT(email)
+	if err != nil {
+		log.Println(err)
+	}
+	c.JSON(http.StatusOK, gin.H{"Message": "The user has successfully logged in.", "Token": jwt})
+	return
 }
 
 /*
@@ -72,6 +88,7 @@ user sign up function
 */
 func (u *User) Register(c *gin.Context) {
 
+	// check for request body
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -122,8 +139,6 @@ func (u *User) Register(c *gin.Context) {
 		log.Println("there is an error password hashing:", err)
 	}
 
-	fmt.Println(u.Password)
-
 	// INSERT-query executing
 	_, err = db.Exec(fmt.Sprintf("INSERT INTO users (email, first_name, last_name, password, confirmed, deleted, confirmation_number) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')", u.Email, u.FirstName, u.LastName, u.Password, u.Confirmed, u.Deleted, u.ConfirmationNumber))
 	if err != nil {
@@ -131,7 +146,6 @@ func (u *User) Register(c *gin.Context) {
 		return
 	}
 
-	// TODO:
 	// send an email to user for confirm his/her account
 	err = helper.SendMail(u.Email, "Confirm your Account.", u.ConfirmationNumber)
 	if err != nil {
@@ -149,11 +163,7 @@ verify users account
 **********
 */
 func (u *User) ConfirmUser(c *gin.Context) {
-	// TODOs:
-	// check for user
-	// update confirmation status (set true)
-	// generate a token (jwt)
-
+	// check for request body
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

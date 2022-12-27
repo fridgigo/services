@@ -21,9 +21,14 @@ func SendMail(receiver, subject string, confirmationNr int) error {
 	port := os.Getenv("SMTP_PORT")
 
 	// This is the message to send in the mail
-	msg := fmt.Sprintf("Hello, your confirmation number is :%v", confirmationNr)
-
+	// msg := fmt.Sprintf("Hello, your confirmation number is :%v", confirmationNr)
+	msg := fmt.Sprintf("To: %v \r\n"+
+		"Subject: %v\r\n"+
+		"\r\n"+
+		"Dear User, \n\n your confirmation number is :%v. \r\n\n Best regards, \n fridgiGO Team", receiver, subject, confirmationNr)
 	body := []byte(msg)
+
+	// body := []byte(msg)
 
 	auth := smtp.PlainAuth("", from, password, host)
 

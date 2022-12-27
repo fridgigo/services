@@ -46,6 +46,6 @@ func Connect() (*sql.DB, error) {
 		log.Println(err)
 		return db, err
 	}
-	fmt.Println("connection was successfully")
+
 	return db, nil
 }
